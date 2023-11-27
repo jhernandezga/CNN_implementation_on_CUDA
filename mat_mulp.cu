@@ -39,36 +39,70 @@ void MatrixAdd(float *M1, float *M2, float *Mout, int n, int p){
             Mout[i*p + j] = M1[i*p + j] + M2[i*p + j];
         }
     }
+}
 
+__global__ void cudaMatrixAdd_1(float *M1, float *M2, float *Mout, int n, int p){
+
+    int i = blockDim.x * blockIdx.x + threadIdx.x; 
+    
+    *(Mout+i) = *(M1+i) + *(M2+i);
+        
+    
+}
+
+void MatrixMult(float *M1, float *M2, float *Mout, int n){
+
+    for(int i = 0; i < n; i++){
+        for(int j = 0; j < n; j++){
+            Mout[i*n + j] = 0;
+            for(int k = 0; k < n; k++){
+                Mout[i*n + j] += M1[i*n + k] * M2[k*n + j];
+            }
+        }
+    }
 }
 
 int main(int argc, char *argv[]){
 
     int n = 3;
     int p = 4;
-    float *M1, *M2, *Mout;
+    float *M1, *M2, *Mout, *Mout_mult;
     M1   = (float*)malloc(sizeof(float) * n*p);
     M2   = (float*)malloc(sizeof(float) * n*p);
     Mout   = (float*)malloc(sizeof(float) * n*p);
+    Mout_mult   = (float*)malloc(sizeof(float) * n*p);
+
+    float *M1_c, *M2_c, *Mout_c;
 
     //cudaMalloc((void**)&M, sizeof(float)*n*p);
-    //cudaMallocManaged(&M, sizeof(float)*n*p);
+    cudaMallocManaged((void**)&M1_c, sizeof(float)*n*p);
+    cudaMallocManaged((void**)&M2_c, sizeof(float)*n*p);
+    cudaMallocManaged((void**)&Mout_c, sizeof(float)*n*p);
 
     MatrixInit(M1, n, p);
     MatrixInit(M2, n, p);
     MatrixInit(Mout, n, p);
 
-    //cudaDeviceSynchronize();
+    MatrixInit(M1_c, n, p);
+    MatrixInit(M2_c, n, p);
+    MatrixInit(Mout_c, n, p);
 
-    MatrixPrint(M1, n, p);
-    MatrixPrint(M2, n, p);
+    cudaDeviceSynchronize();
 
     MatrixAdd(M1, M2, Mout, n, p);
+    MatrixMult(M1, M2, Mout_mult, n);
+
+    cudaMatrixAdd_1<<<n,p>>>(M1_c, M2_c, Mout_c, n, p);
+    cudaDeviceSynchronize();
     
-    MatrixPrint(Mout, n, p);
+    MatrixPrint(M1_c, n, p);
+    MatrixPrint(M2_c, n, p);
+    //MatrixPrint(Mout_c, n, p);
 
+    MatrixPrint(Mout_mult , n, p);
 
-    //cudaFree(M);
-
+    cudaFree(M1_c);
+    cudaFree(M2_c);
+    cudaFree(Mout_c);
     return 0;
 }

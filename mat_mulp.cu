@@ -2,7 +2,7 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 #include <math.h>
-//#include <time.h> 
+#include <time.h> 
 
 
 
@@ -10,6 +10,7 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 #include <stdlib.h>
+
 
 void MatrixInit(float *M, int n, int p){
 
@@ -41,7 +42,7 @@ void MatrixAdd(float *M1, float *M2, float *Mout, int n, int p){
     }
 }
 
-__global__ void cudaMatrixAdd_1(float *M1, float *M2, float *Mout, int n, int p){
+__global__ void cudaMatrixAdd(float *M1, float *M2, float *Mout, int n, int p){
 
     int i = blockDim.x * blockIdx.x + threadIdx.x; 
     
@@ -62,6 +63,21 @@ void MatrixMult(float *M1, float *M2, float *Mout, int n){
     }
 }
 
+__global__ void cudaMatrixMult(float *M1, float *M2, float *Mout, int n){
+
+    int i = blockIdx.x;
+    int j = threadIdx.x;  
+       
+    float sum = 0.0f;
+    for (int k = 0; k < n; k++) {
+
+        sum += *(M1+i*blockDim.x+k)*( *(M2+k*blockDim.x+j));
+        //sum += M1[i * n + k] * M2[k * n + j];
+    }
+    *(Mout +blockDim.x*i+j) = sum;
+    //Mout[i * n + j] = sum;
+}
+
 int main(int argc, char *argv[]){
 
     int n = 3;
@@ -72,12 +88,13 @@ int main(int argc, char *argv[]){
     Mout   = (float*)malloc(sizeof(float) * n*p);
     Mout_mult   = (float*)malloc(sizeof(float) * n*p);
 
-    float *M1_c, *M2_c, *Mout_c;
+    float *M1_c, *M2_c, *Mout_c, *Mout_multc;
 
     //cudaMalloc((void**)&M, sizeof(float)*n*p);
     cudaMallocManaged((void**)&M1_c, sizeof(float)*n*p);
     cudaMallocManaged((void**)&M2_c, sizeof(float)*n*p);
     cudaMallocManaged((void**)&Mout_c, sizeof(float)*n*p);
+    cudaMallocManaged((void**)&Mout_multc, sizeof(float)*n*p);
 
     MatrixInit(M1, n, p);
     MatrixInit(M2, n, p);
@@ -90,17 +107,48 @@ int main(int argc, char *argv[]){
     cudaDeviceSynchronize();
 
     MatrixAdd(M1, M2, Mout, n, p);
-    MatrixMult(M1, M2, Mout_mult, n);
 
-    cudaMatrixAdd_1<<<n,p>>>(M1_c, M2_c, Mout_c, n, p);
+    clock_t start, end;
+    double cpu_time_used=0;
+
+    start = clock();
+    MatrixMult(M1, M2, Mout_mult, n);
+    end = clock();
+    cpu_time_used = ((double) (end - start) / CLOCKS_PER_SEC) * 1000.0;
+    printf("CPU matmult: %f ms\n", cpu_time_used);
+
+    
+    cudaMatrixAdd<<<n,p>>>(M1_c, M2_c, Mout_c, n, p);
+    
+    cudaDeviceSynchronize();
+   
+    // Measure GPU execution time
+    cudaEvent_t start_GPU, stop_GPU;
+    cudaEventCreate(&start_GPU);
+    cudaEventCreate(&stop_GPU);
+    cudaEventRecord(start_GPU, 0);
+    cudaMatrixMult<<<n, n>>>(M1_c, M2_c, Mout_multc, n);
+    cudaEventRecord(stop_GPU, 0);
+    cudaEventSynchronize(stop_GPU);
+    float elapsedTime_GPU;
+    cudaEventElapsedTime(&elapsedTime_GPU, start_GPU, stop_GPU);
+    cudaEventDestroy(start_GPU);
+    cudaEventDestroy(stop_GPU);
+    printf("GPU matmult: %f ms\n", elapsedTime_GPU);
+    
     cudaDeviceSynchronize();
     
-    MatrixPrint(M1_c, n, p);
-    MatrixPrint(M2_c, n, p);
+    //MatrixPrint(M1_c, n, p);
+    //MatrixPrint(M2_c, n, p);
     //MatrixPrint(Mout_c, n, p);
 
-    MatrixPrint(Mout_mult , n, p);
+    //MatrixPrint(Mout , n, p);
 
+    //MatrixPrint(Mout_c , n, p);
+    MatrixPrint(Mout_mult , n, p);
+    MatrixPrint(Mout_multc , n, p);
+    
+    
     cudaFree(M1_c);
     cudaFree(M2_c);
     cudaFree(Mout_c);

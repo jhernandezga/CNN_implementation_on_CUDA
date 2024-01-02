@@ -33,6 +33,22 @@ int main() {
     int outputHeight_pooling = floor(height/2);
 
     // Allocate host memory and initialize test data
+    
+    //Dense
+
+    float weights[9] = {
+        1,1,2,
+        2,1,3,
+        1,4,2
+    };
+
+    
+    float input[3] = {3,1,2};
+    float e_out_dense[3] = {6,13,11};
+    float out_dense[3] = {0,0,0};
+
+    //Conv
+    
     float h_input[49] = {
         0,1,1,1,0,0,0,
         0,0,1,1,1,0,0,
@@ -79,6 +95,12 @@ int main() {
 
     // Allocate device memory
     float *d_input, *d_output, *d_filter, *d_output_pooling,*d_output_same;
+    float *input_l, *weights_l, *out_dense_l;
+
+    cudaMalloc(&input_l, 3 * sizeof(float));
+    cudaMalloc(&weights_l, 9 * sizeof(float));
+    cudaMalloc(&out_dense_l, 3 * sizeof(float));
+
     cudaMalloc(&d_input, imageSize * sizeof(float));
     cudaMalloc(&d_output, outputSize * sizeof(float));
     cudaMalloc(&d_output_same, imageSize * sizeof(float));
@@ -88,6 +110,10 @@ int main() {
     // Copy data from host to device
     cudaMemcpy(d_input, h_input, imageSize * sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy(d_filter, h_filter, filterSize * sizeof(float), cudaMemcpyHostToDevice);
+
+    cudaMemcpy(weights_l, weights, 9 * sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(input_l, input, 3 * sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(out_dense_l, out_dense, 3 * sizeof(float), cudaMemcpyHostToDevice);
     
     // Set up kernel launch parameters and run the kernel
 
@@ -167,6 +193,18 @@ int main() {
         std::cout << "Test Passed!" << std::endl;
     } else {
         std::cout << "Test Failed!" << std::endl;
+    }
+
+    dim3 threadsPerBlock_d1(16);  
+    dim3 numBlocks_d1((3 + threadsPerBlock_d1.x - 1) / threadsPerBlock_d1.x);
+
+    denseLayerKernel<<<numBlocks_d1, threadsPerBlock_d1>>>(input_l, out_dense_l, weights_l,nullptr, 3, 3, false);
+    cudaDeviceSynchronize();
+    cudaMemcpy(out_dense, out_dense_l, 3 * sizeof(float), cudaMemcpyDeviceToHost);
+
+     std::cout << "output dense:" << std::endl;
+    for (int i = 0; i < 3; ++i) {  
+        std::cout << out_dense[i] << " ";
     }
 
     // Free device memory

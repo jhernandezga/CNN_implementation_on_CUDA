@@ -72,8 +72,8 @@ void readImageAtIndex(int **img_gray, unsigned int selectedImageIndex, const cha
 
 float* normalizeAndFlattenImage(int **img_2d, int height, int width) {
     // Find the maximum value in the image
-    int maxVal = 0;
-    for (int i = 0; i < height; i++) {
+    int maxVal = 255;
+    /*for (int i = 0; i < height; i++) {
         for (int j = 0; j < width; j++) {
             if (img_2d[i][j] > maxVal) {
                 maxVal = img_2d[i][j];
@@ -85,7 +85,7 @@ float* normalizeAndFlattenImage(int **img_2d, int height, int width) {
     if (maxVal == 0) {
         fprintf(stderr, "Maximum value in the image is zero\n");
         exit(1);
-    }
+    }*/
 
     // Allocate memory for the normalized image
     float *normalized_img_1d = (float *)malloc(height * width * sizeof(float));
@@ -105,7 +105,28 @@ float* normalizeAndFlattenImage(int **img_2d, int height, int width) {
 }
 
 
+void initializeWeights(const std::string& filename, float* weights, int width, int height, int channels) {
+    std::ifstream file(filename, std::ios::binary);
+    if (!file) {
+        std::cerr << "Cannot open file.\n";
+        throw std::runtime_error("File open failed");
+    }
 
+    int num_weights = width * height * channels;
+    file.read(reinterpret_cast<char*>(weights), num_weights * sizeof(float));
+
+    if (!file) {
+        std::cerr << "Error occurred during file read. Read " << file.gcount() << " bytes.\n";
+        if (file.eof()) {
+            std::cerr << "End of file reached unexpectedly.\n";
+        }
+        throw std::runtime_error("File read failed");
+    }
+
+    file.close();
+}
+
+/*
 void initializeWeights(const std::string& filename, float* weights, int num_weights) {
     std::ifstream file(filename, std::ios::binary);
     if (!file) {
@@ -124,7 +145,7 @@ void initializeWeights(const std::string& filename, float* weights, int num_weig
     }
 
     file.close();
-}
+}*/
 
 
 void printMatrix(const float* array, int width, int height, int channels) {
@@ -140,15 +161,16 @@ void printMatrix(const float* array, int width, int height, int channels) {
     }
 }
 
-void initializeWithRandomValues(float* array, int width, int height, int channels) {
+void initializeWithRandomValues(float* array, int width, int height, int channels, int num_filters) {
     // Initialize the random number generator with a seed
     std::srand(std::time(0));
 
-    int size = width * height * channels;
+    int size = width * height * channels * num_filters;
     for (int i = 0; i < size; ++i) {
         array[i] = static_cast<float>(std::rand()) / static_cast<float>(RAND_MAX);
     }
 }
+
 
 void initializeWithZero(float* array, int width, int height, int channels) {
     int size = width * height * channels;
@@ -156,3 +178,24 @@ void initializeWithZero(float* array, int width, int height, int channels) {
         array[i] = 0;
     }
 }
+
+void printTensor(const float* array, int width, int height, int channels, int num_filters) {
+    for (int n = 0; n < num_filters; ++n) {
+        std::cout << "Filter " << n + 1 << ":\n";
+        for (int z = 0; z < channels; ++z) {
+            std::cout << "  Channel " << z + 1 << ":\n";
+            for (int y = 0; y < height; ++y) {
+                for (int x = 0; x < width; ++x) {
+                    int index = n * (width * height * channels) + z * (width * height) + y * width + x;
+                    std::cout << std::fixed << std::setprecision(2) << array[index] << " ";
+                }
+                std::cout << std::endl;
+            }
+            std::cout << std::endl;
+        }
+        std::cout << std::endl;
+    }
+}
+
+
+

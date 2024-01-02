@@ -222,7 +222,8 @@ void softmax(float* input, int size) {
 
     float sum = 0.0;
     for (int i = 0; i < size; ++i) {
-        input[i] = exp(input[i] - maxElement);
+        //input[i] = exp(input[i] - maxElement);
+        input[i] = exp(input[i]);
         sum += input[i];
     }
 

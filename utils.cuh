@@ -23,13 +23,16 @@ void readImageAtIndex(int **img_gray, unsigned int selectedImageIndex, const cha
 float* normalizeAndFlattenImage(int **img_2d, int height, int width);
 
 // Function to initialize weights from a binary file
-void initializeWeights(const std::string& filename, float* weights, int num_weights);
+void initializeWeights(const std::string& filename, float* weights, int width, int height, int channels);
 
 // Function to print a matrix (or array) in a formatted way
 void printMatrix(const float* array, int width, int height, int channels);
 
-void initializeWithRandomValues(float* array, int width, int height, int channels);
+void printTensor(const float* array, int width, int height, int channels, int num_filters);
+
+void initializeWithRandomValues(float* array, int width, int height, int channels, int num_filters);
 
 void initializeWithZero(float* array, int width, int height, int channels);
+
 
 #endif // IMAGE_UTILS_CUH

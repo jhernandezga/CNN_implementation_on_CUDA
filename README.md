@@ -1,6 +1,18 @@
 # LeNet-5 CUDA Implementation
 
+### Authors: Jorge Hernández and Kia Zegrati 
 This project presents the implementation of the LeNet-5 convolutional neural network using CUDA, the parallel computing platform and API model created by NVIDIA.This implementation showcases the power of GPU-accelerated computing in processing neural networks. Developed primarily for educational purposes, this work forms a part of the practical coursework in "Hardware for Signal Processing", a subject that delves into the hardware aspects of processing signals and data.
+<div align="center">
+  <img src="https://github.com/jhernandezga/CNN_implementation_on_CUDA/assets/57245076/2da81942-caf3-486b-98e6-a5d6f52a1bcc" width="400">
+  <img src="https://github.com/jhernandezga/CNN_implementation_on_CUDA/assets/57245076/19ebb169-1f41-482e-909b-b36fb629024e" width="800" alt="CNN Implementation on CUDA">
+<br>Image from: [The Convolutional Network](https://pabloinsente.github.io/the-convolutional-network)
+</div>
+
+
+
+
+
+
 
 ## Description
 
@@ -99,3 +111,18 @@ This section provides an overview of the key scripts in the project, detailing t
 - The current performance is not as expected; further debugging is required. We believe the main issue right now is related to loading the weights. Despite thorough debugging of this step, more detailed and careful attention is necessary in how the weigths are stored and loaded. Additionally, properly testing the conv3d kernel with a generalized test might be needed.
 
 The network is able to perform the operations for inference with the loaded weigths from the trained model, however the outputs are most of the time not coherent with what is expected.
+
+## Contact Information
+jhernandezga@unal.edu.co
+
+### Outputs
+Preview of some of the outputs with the current network:
+
+![image](https://github.com/jhernandezga/CNN_implementation_on_CUDA/assets/57245076/33bc47a6-2a70-4362-a68b-a73d63ee0e67)
+![image](https://github.com/jhernandezga/CNN_implementation_on_CUDA/assets/57245076/c18eb82e-21be-4ad2-b688-5928520672c2)
+![image](https://github.com/jhernandezga/CNN_implementation_on_CUDA/assets/57245076/0050f7f3-7cb3-4468-b499-dba2d621d179)
+![image](https://github.com/jhernandezga/CNN_implementation_on_CUDA/assets/57245076/a0071c8c-f401-42ba-a73c-426a1899865c)
+
+
+
+
